@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedido de Almuerzo</title>
+
+<!-- =======================================================
+🧱 BLOQUE A — Identidad y Limites
+======================================================= -->
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+    background: #f8f9fa;
+    padding: 20px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* ---------- HEADER ---------- */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.logo {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.tagline {
+    color: #666;
+    font-size: 16px;
+}
+
+/* ---------- ESTADO DE MERCADO ---------- */
+.market-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.market-abierto { background: #d4edda; color: #155724; border-left: 5px solid #28a745; }
+.market-tardio  { background: #fff3cd; color: #856404; border-left: 5px solid #ffc107; }
+.market-extra   { background: #f8d7da; color: #721c24; border-left: 5px solid #dc3545; }
+.market-cerrado { background: #e2e3e5; color: #383d41; border-left: 5px solid #6c757d; }
+
+/* ---------- MENÚ ---------- */
+.menu-card, .extras-section, .summary-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.option-grid { display: grid; gap: 15px; }
+
+.option-card {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.option-card:hover {
+    border-color: #bdc3c7;
+}
+
+.option-card.selected {
+    border-color: #27ae60;
+    background: #f0f9f0;
+}
+
+/* ---------- EXTRAS ---------- */
+.extras-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.extra-option {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.extra-option:hover {
+    border-color: #bdc3c7;
+}
+
+.extra-option.selected {
+    border-color: #f39c12;
+    background: #fff8e1;
+}
+
+/* ---------- BOTÓN WHATSAPP ---------- */
+.whatsapp-btn {
+    background: #25D366;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 18px;
+    font-size: 18px;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 15px;
+}
+
+.whatsapp-btn:hover:not(:disabled) {
+    background: #1da851;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.whatsapp-btn:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+}
+
+/* ---------- ADMIN ---------- */
+.admin-link {
+    display: block;
+    text-align: center;
+    color: #3498db;
+    text-decoration: none;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.admin-link:hover {
+    text-decoration: underline;
+}
+
+.admin-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.admin-content {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.admin-input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.admin-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+/* ---------- RESUMEN ---------- */
+#summaryItems {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    min-height: 50px;
+}
+
+.puntos-display {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #e3f2fd;
+    border-radius: 6px;
+    color: #1976d2;
+    font-weight: 600;
+}
+</style>
+</head>
+
+<body>
+
+<!-- =======================================================
+🧱 BLOQUE B — UI CLIENTE (BASE CANÓNICA)
+Neutral, simétrica, escalable, sin sesgos
+======================================================= -->
+
+<div class="header">
+    <div class="logo">🍽️ Pedido de Almuerzo</div>
+    <div class="tagline">Pide fácil, recibe rápido</div>
+
+    <div id="marketIndicator" class="market-indicator">
+        <span id="marketDot">●</span>
+        <span id="marketText">CARGANDO...</span>
+    </div>
+</div>
+
+<div class="menu-card">
+    <h3>📋 Menú de hoy</h3>
+    <p id="sopaDelDia">🥣 Sopa del día</p>
+
+    <div class="option-grid">
+        <!-- Sopa -->
+        <div class="option-card" data-option="sopa">
+            🥣 Sopa del día
+        </div>
+
+        <!-- Segundos -->
+        <div class="option-card" data-option="segundoA">
+            🍛 Segundo A
+        </div>
+        <div class="option-card" data-option="segundoB">
+            🍛 Segundo B
+        </div>
+
+        <!-- Almuerzos completos -->
+        <div class="option-card" data-option="almuerzoA">
+            🍽️ Almuerzo completo A
+        </div>
+        <div class="option-card" data-option="almuerzoB">
+            🍽️ Almuerzo completo B
+        </div>
+    </div>
+</div>
+
+<div class="extras-section">
+    <h3>➕ Extras</h3>
+    <div class="extras-grid">
+        <div class="extra-option" data-extra="presaA">
+            🍖 Presa adicional A
+        </div>
+        <div class="extra-option" data-extra="presaB">
+            🍖 Presa adicional B
+        </div>
+    </div>
+</div>
+
+<div class="summary-card">
+    <h3>📦 Tu pedido</h3>
+    <div id="summaryItems">Nada seleccionado</div>
+    <div>
+        Despacho: <span id="despachoTime">--:--</span>
+    </div>
+    <div id="puntosContainer" class="puntos-display" style="display: none;">
+        ⭐ Puntos ganados: <span id="puntosDisplay">0</span>
+    </div>
+</div>
+
+<button id="whatsappBtn" class="whatsapp-btn" disabled>
+    📱 Enviar pedido por WhatsApp
+</button>
+
+<a href="#" id="adminLink" class="admin-link">👤 Actualizar menú</a>
+
+<!-- Modal Admin -->
+<div id="adminModal" class="admin-modal">
+    <div class="admin-content">
+        <h3>🔧 Configuración del Menú</h3>
+        <p><small>Cambios solo afectan a esta sesión</small></p>
+        
+        <label>Sopa del día:</label>
+        <input type="text" id="adminSopa" class="admin-input" placeholder="Ej: Sopa de pollo">
+        
+        <label>Segundo A:</label>
+        <input type="text" id="adminSegundoA" class="admin-input" placeholder="Ej: Arroz con pollo">
+        
+        <label>Segundo B:</label>
+        <input type="text" id="adminSegundoB" class="admin-input" placeholder="Ej: Seco de carne">
+        
+        <label>Número WhatsApp:</label>
+        <input type="text" id="adminWhatsApp" class="admin-input" placeholder="593XXXXXXXXX" value="593XXXXXXXXX">
+        
+        <button id="adminSaveBtn" class="admin-btn">💾 Guardar Cambios</button>
+        <button id="adminCloseBtn" class="admin-btn" style="background: #95a5a6;">❌ Cerrar</button>
+    </div>
+</div>
+
+<script>
+/* =======================================================
+🧱 BLOQUE C — EXPERIENCIA DEL CLIENTE (FLUJO COGNITIVO)
+======================================================= */
+
+// Estado global del cliente
+const estado = {
+    opcionSeleccionada: null,
+    extrasSeleccionados: [],
+    config: {
+        sopa: "Sopa del día",
+        segundoA: "Segundo A",
+        segundoB: "Segundo B",
+        whatsappNumber: "593968307331"
+    }
+};
+
+/* ---------- SELECCIÓN PRINCIPAL ---------- */
+function inicializarSeleccionMenu() {
+    document.querySelectorAll('.option-card').forEach(card => {
+        card.addEventListener('click', () => {
+            // Quitar selección previa
+            document.querySelectorAll('.option-card')
+                .forEach(c => c.classList.remove('selected'));
+
+            // Marcar selección actual
+            card.classList.add('selected');
+
+            // Guardar estado
+            estado.opcionSeleccionada = card.dataset.option;
+
+            // Actualizar UI
+            actualizarEstadoSistema();
+        });
+    });
+}
+
+/* ---------- EXTRAS (MULTI-SELECCIÓN SUAVE) ---------- */
+function inicializarExtras() {
+    document.querySelectorAll('.extra-option').forEach(extra => {
+        extra.addEventListener('click', () => {
+            const id = extra.dataset.extra;
+
+            extra.classList.toggle('selected');
+
+            if (estado.extrasSeleccionados.includes(id)) {
+                estado.extrasSeleccionados = estado.extrasSeleccionados.filter(x => x !== id);
+            } else {
+                estado.extrasSeleccionados.push(id);
+            }
+
+            actualizarEstadoSistema();
+        });
+    });
+}
+
+/* ---------- RESUMEN DEL PEDIDO ---------- */
+function actualizarResumen() {
+    const resumen = document.getElementById('summaryItems');
+
+    if (!estado.opcionSeleccionada) {
+        resumen.textContent = "Nada seleccionado";
+        return;
+    }
+
+    let texto = [];
+    texto.push(formatearOpcion(estado.opcionSeleccionada));
+
+    if (estado.extrasSeleccionados.length > 0) {
+        estado.extrasSeleccionados.forEach(e => {
+            texto.push(`➕ ${formatearExtra(e)}`);
+        });
+    }
+
+    resumen.innerHTML = texto.join('<br>');
+}
+
+/* ---------- FORMATOS HUMANOS ---------- */
+function formatearOpcion(opcion) {
+    const mapa = {
+        sopa: `🥣 ${estado.config.sopa}`,
+        segundoA: `🍛 ${estado.config.segundoA}`,
+        segundoB: `🍛 ${estado.config.segundoB}`,
+        almuerzoA: `🍽️ Almuerzo completo (${estado.config.sopa} + ${estado.config.segundoA})`,
+        almuerzoB: `🍽️ Almuerzo completo (${estado.config.sopa} + ${estado.config.segundoB})`
+    };
+    return mapa[opcion] || opcion;
+}
+
+function formatearExtra(extra) {
+    const mapa = {
+        presaA: "🍖 Presa adicional A",
+        presaB: "🍖 Presa adicional B"
+    };
+    return mapa[extra] || extra;
+}
+
+/* ---------- ACTUALIZAR UI CONFIG ---------- */
+function actualizarUIconConfig() {
+    document.getElementById('sopaDelDia').textContent = `🥣 ${estado.config.sopa}`;
+    
+    // Actualizar textos de las opciones
+    document.querySelector('[data-option="sopa"]').textContent = `🥣 ${estado.config.sopa}`;
+    document.querySelector('[data-option="segundoA"]').textContent = `🍛 ${estado.config.segundoA}`;
+    document.querySelector('[data-option="segundoB"]').textContent = `🍛 ${estado.config.segundoB}`;
+    document.querySelector('[data-option="almuerzoA"]').textContent = `🍽️ Almuerzo completo (${estado.config.sopa} + ${estado.config.segundoA})`;
+    document.querySelector('[data-option="almuerzoB"]').textContent = `🍽️ Almuerzo completo (${estado.config.sopa} + ${estado.config.segundoB})`;
+}
+
+/* ---------- INICIALIZACIÓN BLOQUE C ---------- */
+function iniciarExperienciaCliente() {
+    inicializarSeleccionMenu();
+    inicializarExtras();
+    actualizarUIconConfig();
+    
+    // Inicializar admin
+    inicializarAdmin();
+}
+</script>
+
+<script>
+/* =======================================================
+🧱 BLOQUE D — TIEMPO COMO VERDAD
+Fuente única de estado temporal del sistema
+======================================================= */
+
+function obtenerTiempoSistema() {
+    const ahora = new Date();
+
+    const horas = ahora.getHours();
+    const minutos = ahora.getMinutes();
+    const minutosTotales = horas * 60 + minutos;
+
+    // ---------- FRANJAS HORARIAS ----------
+    let franja;
+    let puntos;
+
+    if (minutosTotales >= 540 && minutosTotales <= 659) {
+        // 09:00 – 10:59
+        franja = "TEMPRANO";
+        puntos = 3;
+    } else if (minutosTotales >= 660 && minutosTotales <= 719) {
+        // 11:00 – 11:59
+        franja = "NORMAL";
+        puntos = 1;
+    } else if (minutosTotales >= 720 && minutosTotales <= 840) {
+        // 12:00 – 14:00
+        franja = "TARDÍO";
+        puntos = 0;
+    } else {
+        franja = "CERRADO";
+        puntos = 0;
+    }
+
+    // ---------- DESPACHOS DISCRETOS ----------
+    const despachos = [
+        12 * 60,
+        12 * 60 + 30,
+        13 * 60,
+        13 * 60 + 30,
+        14 * 60
+    ];
+
+    let despachoMinutos = null;
+
+    for (let d of despachos) {
+        if (d >= minutosTotales) {
+            despachoMinutos = d;
+            break;
+        }
+    }
+
+    const despacho =
+        despachoMinutos !== null
+            ? `${String(Math.floor(despachoMinutos / 60)).padStart(2, '0')}:${String(despachoMinutos % 60).padStart(2, '0')}`
+            : null;
+
+    // ---------- OBJETO SOBERANO ----------
+    return {
+        ahora,
+        hora: horas,
+        minutos,
+        minutosTotales,
+
+        franja,          // TEMPRANO | NORMAL | TARDÍO | CERRADO
+        puntos,          // 3 | 1 | 0
+
+        despacho,        // "12:00", "12:30", etc. o null
+        mercadoAbierto: franja !== "CERRADO"
+    };
+}
+</script>
+
+<script>
+/* =======================================================
+🧱 BLOQUE E — REGLAS OPERATIVAS
+======================================================= */
+
+function evaluarReglasOperativas(fecha = new Date()) {
+
+    const hora = fecha.getHours();
+    const minutos = fecha.getMinutes();
+    const tiempo = hora + minutos / 60;
+
+    let resultado = {
+        pedidoValido: true,
+        puntos: 0,
+        despacho: null,
+        permitirEnvio: true,
+        permitirExtras: true,
+        estadoMercado: "ABIERTO"
+    };
+
+    // ---------------------------------------
+    // 1️⃣ Validación de horario general
+    // ---------------------------------------
+    if (tiempo < 9 || tiempo >= 14) {
+        resultado.pedidoValido = false;
+        resultado.permitirEnvio = false;
+        resultado.permitirExtras = false;
+        resultado.estadoMercado = "CERRADO";
+        return resultado;
+    }
+
+    // ---------------------------------------
+    // 2️⃣ Sistema de puntos (educación del cliente)
+    // ---------------------------------------
+    if (tiempo >= 9 && tiempo < 11) {
+        resultado.puntos = 3;
+        resultado.estadoMercado = "TEMPRANO";
+    } else if (tiempo >= 11 && tiempo < 12) {
+        resultado.puntos = 1;
+        resultado.estadoMercado = "NORMAL";
+    } else {
+        resultado.puntos = 0;
+        resultado.estadoMercado = "TARDÍO";
+    }
+
+    // ---------------------------------------
+    // 3️⃣ Cálculo de despacho (slot más cercano)
+    // ---------------------------------------
+    const slotsDespacho = [
+        12.0,   // 12:00
+        12.5,   // 12:30
+        13.0,   // 13:00
+        13.5,   // 13:30
+        14.0    // 14:00
+    ];
+
+    for (let slot of slotsDespacho) {
+        if (tiempo < slot) {
+            resultado.despacho = convertirHora(slot);
+            break;
+        }
+    }
+
+    // Si no hay slot disponible (caso extremo)
+    if (!resultado.despacho) {
+        resultado.pedidoValido = false;
+        resultado.permitirEnvio = false;
+        resultado.estadoMercado = "CERRADO";
+    }
+
+    return resultado;
+}
+
+// ---------------------------------------
+// Utilidad: decimal → HH:MM
+// ---------------------------------------
+function convertirHora(decimal) {
+    const h = Math.floor(decimal);
+    const m = Math.round((decimal - h) * 60);
+    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+}
+</script>
+
+<script>
+/* =======================================================
+🧱 BLOQUE F — TRADUCTOR DE WHATSAPP
+======================================================= */
+
+function generarMensajeWhatsApp() {
+    const tiempo = obtenerTiempoSistema();
+    const reglas = evaluarReglasOperativas();
+    
+    if (!reglas.permitirEnvio || !reglas.pedidoValido) {
+        alert("El mercado está cerrado o no hay despachos disponibles");
+        return null;
+    }
+    
+    if (!estado.opcionSeleccionada) {
+        alert("Por favor selecciona una opción del menú");
+        return null;
+    }
+
+    const fecha = new Date().toLocaleDateString('es-EC');
+    const hora  = new Date().toLocaleTimeString('es-EC', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    let mensaje = `
+PEDIDO DE ALMUERZO
+📅 Fecha: ${fecha}
+⏰ Hora pedido: ${hora}
+📍 Estado mercado: ${reglas.estadoMercado}
+
+📦 PEDIDO:
+${formatearOpcion(estado.opcionSeleccionada)}`;
+
+    if (estado.extrasSeleccionados.length > 0) {
+        mensaje += "\n\n➕ EXTRAS:";
+        estado.extrasSeleccionados.forEach(e => {
+            mensaje += `\n${formatearExtra(e)}`;
+        });
+    }
+
+    mensaje += `
+
+🚚 DESPACHO ESTIMADO: ${reglas.despacho}
+⏳ Puntos ganados: ${reglas.puntos}
+`.trim();
+
+    return mensaje;
+}
+
+function enviarPedidoPorWhatsApp() {
+    const mensaje = generarMensajeWhatsApp();
+    
+    if (!mensaje) return;
+
+    const numeroWhatsApp = estado.config.whatsappNumber;
+    const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
+    
+    window.open(url, '_blank');
+}
+</script>
+
+<script>
+/* =======================================================
+🧱 BLOQUE G — ORQUESTADOR DEL SISTEMA
+======================================================= */
+
+// Estado del sistema
+const sistema = {
+    tiempo: null,
+    reglas: null,
+    estadoUI: "INICIAL"
+};
+
+function actualizarEstadoSistema() {
+    // 1. Obtener tiempo actual (Bloque D)
+    sistema.tiempo = obtenerTiempoSistema();
+    
+    // 2. Evaluar reglas (Bloque E)
+    sistema.reglas = evaluarReglasOperativas();
+    
+    // 3. Actualizar UI según estado
+    actualizarUIEstado();
+    
+    // 4. Actualizar resumen (Bloque C)
+    actualizarResumen();
+    
+    // 5. Controlar botón WhatsApp
+    controlarBotonWhatsApp();
+}
+
+function actualizarUIEstado() {
+    const indicator = document.getElementById('marketIndicator');
+    const dot = document.getElementById('marketDot');
+    const text = document.getElementById('marketText');
+    const puntosContainer = document.getElementById('puntosContainer');
+    const puntosDisplay = document.getElementById('puntosDisplay');
+    
+    // Actualizar indicador de mercado
+    indicator.className = 'market-indicator';
+    
+    switch(sistema.tiempo.franja) {
+        case 'TEMPRANO':
+            indicator.classList.add('market-abierto');
+            text.textContent = 'MERCADO ABIERTO (TEMPRANO)';
+            break;
+        case 'NORMAL':
+            indicator.classList.add('market-abierto');
+            text.textContent = 'MERCADO ABIERTO';
+            break;
+        case 'TARDÍO':
+            indicator.classList.add('market-tardio');
+            text.textContent = 'MERCADO TARDÍO';
+            break;
+        case 'CERRADO':
+            indicator.classList.add('market-cerrado');
+            text.textContent = 'MERCADO CERRADO';
+            break;
+    }
+    
+    // Actualizar puntos
+    if (sistema.reglas.puntos > 0) {
+        puntosContainer.style.display = 'block';
+        puntosDisplay.textContent = sistema.reglas.puntos;
+    } else {
+        puntosContainer.style.display = 'none';
+    }
+    
+    // Actualizar hora de despacho
+    if (sistema.reglas.despacho) {
+        document.getElementById('despachoTime').textContent = sistema.reglas.despacho;
+    } else {
+        document.getElementById('despachoTime').textContent = '--:--';
+    }
+}
+
+function controlarBotonWhatsApp() {
+    const btn = document.getElementById('whatsappBtn');
+    const tieneSeleccion = estado.opcionSeleccionada !== null;
+    const mercadoAbierto = sistema.reglas && sistema.reglas.permitirEnvio;
+    
+    btn.disabled = !(tieneSeleccion && mercadoAbierto);
+}
+
+function inicializarAdmin() {
+    const modal = document.getElementById('adminModal');
+    const adminLink = document.getElementById('adminLink');
+    const closeBtn = document.getElementById('adminCloseBtn');
+    const saveBtn = document.getElementById('adminSaveBtn');
+    
+    // Cargar valores actuales
+    document.getElementById('adminSopa').value = estado.config.sopa;
+    document.getElementById('adminSegundoA').value = estado.config.segundoA;
+    document.getElementById('adminSegundoB').value = estado.config.segundoB;
+    document.getElementById('adminWhatsApp').value = estado.config.whatsappNumber;
+    
+    // Abrir modal
+    adminLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        modal.style.display = 'flex';
+    });
+    
+    // Cerrar modal
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    
+    // Guardar cambios
+    saveBtn.addEventListener('click', () => {
+        estado.config.sopa = document.getElementById('adminSopa').value || "Sopa del día";
+        estado.config.segundoA = document.getElementById('adminSegundoA').value || "Segundo A";
+        estado.config.segundoB = document.getElementById('adminSegundoB').value || "Segundo B";
+        estado.config.whatsappNumber = document.getElementById('adminWhatsApp').value || "593968307331";
+        
+        actualizarUIconConfig();
+        actualizarEstadoSistema();
+        modal.style.display = 'none';
+        
+        alert('Configuración guardada (solo para esta sesión)');
+    });
+    
+    // Cerrar al hacer click fuera
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+}
+
+// =======================================================
+// INICIALIZACIÓN COMPLETA DEL SISTEMA
+// =======================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Iniciar experiencia del cliente (Bloque C)
+    iniciarExperienciaCliente();
+    
+    // 2. Configurar botón WhatsApp
+    document.getElementById('whatsappBtn').addEventListener('click', enviarPedidoPorWhatsApp);
+    
+    // 3. Estado inicial del sistema
+    actualizarEstadoSistema();
+    
+    // 4. Actualizar cada minuto
+    setInterval(actualizarEstadoSistema, 60000);
+});
+</script>
+</body>
+</html>
